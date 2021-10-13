@@ -1,11 +1,13 @@
 package com.example.sendpushnotification
 
+import android.content.Context
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import com.example.sendpushnotification.databinding.ActivityMainBinding
 import com.example.sendpushnotification.databinding.ActivityMainBinding.inflate
+import com.google.firebase.iid.FirebaseInstanceIdReceiver
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
@@ -26,17 +28,23 @@ class MainActivity : AppCompatActivity() {
         binding = inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
+        FirebaseService.sharedPref = getSharedPreferences("sharedPref", Context.MODE_PRIVATE)
 
+        FirebaseMessaging.getInstance().token.addOnSuccessListener {
+            FirebaseService.token = it
+            binding.etToken.setText(it)
+        }
         FirebaseMessaging.getInstance().subscribeToTopic(TOPIC)
 
         binding.btnSend.setOnClickListener{
             val title = binding.etTitle.text.toString()
             val message = binding.etMessage.text.toString()
+            val recipientToken = binding.etToken.text.toString()
 
-            if (title.isNotEmpty() && message.isNotEmpty()) {
+            if (title.isNotEmpty() && message.isNotEmpty() && recipientToken.isNotEmpty()) {
                 PushNotification(
                     NotificationData(title, message),
-                    TOPIC
+                    recipientToken
                 ).also {
                     sendNotification(it)
                 }
